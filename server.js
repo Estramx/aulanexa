@@ -76,8 +76,6 @@ app.post('/api/checkout', async (req, res) => {
   try {
     const { email } = req.body;
     
-    const preference = new Preference(mpClient);
-    
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const host = req.get('host');
     const baseUrl = `${protocol}://${host}`;
