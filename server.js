@@ -78,27 +78,33 @@ app.post('/api/checkout', async (req, res) => {
     
     const preference = new Preference(mpClient);
     
-        const baseUrl = `${req.protocol}://${req.get('host')}`;
-        const response = await preference.create({
-          body: {
-            items: [
-              {
-                title: 'Suscripción Pro Aulanexa (1 Mes)',
-                unit_price: 5,
-                quantity: 1,
-              }
-            ],
-            payer: {
-              email: email
-            },
-            back_urls: {
-              success: `${baseUrl}/?status=success`,
-              failure: `${baseUrl}/?status=failure`,
-              pending: `${baseUrl}/?status=pending`
-            },
-            auto_return: 'approved',
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const host = req.get('host');
+    const baseUrl = `${protocol}://${host}`;
+    
+    const preference = new Preference(mpClient);
+    
+    const response = await preference.create({
+      body: {
+        items: [
+          {
+            title: 'Suscripción Pro Aulanexa (1 Mes)',
+            unit_price: 5,
+            quantity: 1,
+            currency_id: 'ARS'
           }
-        });
+        ],
+        payer: {
+          email: email
+        },
+        back_urls: {
+          success: `${baseUrl}/?status=success`,
+          failure: `${baseUrl}/?status=failure`,
+          pending: `${baseUrl}/?status=pending`
+        },
+        auto_return: 'approved',
+      }
+    });
 
     res.json({ init_point: response.init_point });
   } catch (error) {
