@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aulanexa — Generador de clases con IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #1a1714; --ink2: #4a4540; --ink3: #8a837a;
+  --paper: #faf8f4; --surface: #f3f0ea; --border: #e0dbd0;
+  --accent: #c84b1f; --accent2: #e8a87c;
+  --gold: #b8860b; --gold-bg: #fdf8e8;
+  --success: #2d6a4f; --success-bg: #edf7f1;
+  --radius: 12px;
+  --font-d: 'Instrument Serif', Georgia, serif;
+  --font-b: 'DM Sans', system-ui, sans-serif;
+}
+body { font-family: var(--font-b); background: var(--paper); color: var(--ink); min-height: 100vh; line-height: 1.6; }
+
+@media print {
+  header, .nav-tabs, .form-card, #pricing-page, #auth-modal, .no-print { display: none !important; }
+  #result-section { display: block !important; padding: 0 1rem; }
+  .result-card { border: none; padding: 0; font-size: 13px; }
+  .print-header { display: block !important; margin-bottom: 1.5rem; border-bottom: 1px solid #ccc; padding-bottom: 1rem; }
+}
+.print-header { display: none; }
+.print-header h1 { font-family: var(--font-d); font-size: 1.4rem; }
+.print-header p { font-size: 12px; color: #666; margin-top: 4px; }
+
+header {
+  border-bottom: 1px solid var(--border); padding: .85rem 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--paper); position: sticky; top: 0; z-index: 100;
+}
+.logo { font-family: var(--font-d); font-size: 1.45rem; letter-spacing: -.02em; }
+.logo span { color: var(--accent); font-style: italic; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.user-pill {
+  display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink2);
+  background: var(--surface); border: 1px solid var(--border); padding: 6px 14px; border-radius: 100px;
+}
+.user-pill strong { color: var(--ink); font-weight: 500; }
+.plan-badge { font-size: 10px; font-weight: 500; letter-spacing: .04em; padding: 2px 8px; border-radius: 100px; }
+.plan-free { background: var(--surface); color: var(--ink3); border: 1px solid var(--border); }
+.plan-pro { background: var(--gold-bg); color: var(--gold); border: 1px solid #e8d88a; }
+.btn-link { background: none; border: none; cursor: pointer; font-family: var(--font-b); font-size: 13px; color: var(--ink3); padding: 4px 8px; border-radius: 6px; }
+.btn-link:hover { color: var(--accent); }
+
+.nav-tabs { border-bottom: 1px solid var(--border); background: var(--paper); display: flex; padding: 0 2rem; }
+.tab-btn {
+  font-family: var(--font-b); font-size: 14px; color: var(--ink3);
+  padding: 12px 20px; border: none; background: none; cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color .15s, border-color .15s;
+}
+.tab-btn:hover { color: var(--ink); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+
+.page { display: none; }
+.page.active { display: block; }
+
+.hero { max-width: 720px; margin: 0 auto; padding: 3.5rem 2rem 1.5rem; text-align: center; }
+.hero-tag {
+  display: inline-block; font-size: 12px; font-weight: 500; letter-spacing: .08em;
+  color: var(--accent); border: 1px solid var(--accent2);
+  padding: 4px 14px; border-radius: 100px; margin-bottom: 1.25rem; background: #fdf3ec;
+}
+.hero h1 { font-family: var(--font-d); font-size: clamp(1.8rem,5vw,3rem); line-height: 1.15; letter-spacing: -.03em; margin-bottom: .9rem; }
+.hero h1 em { color: var(--accent); font-style: italic; }
+.hero p { font-size: .95rem; color: var(--ink2); max-width: 460px; margin: 0 auto 2rem; }
+
+.usage-bar-wrap { max-width: 720px; margin: 0 auto 0; padding: 0 2rem; }
+.usage-bar-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: .75rem 1.25rem; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.usage-label { font-size: 13px; color: var(--ink2); white-space: nowrap; }
+.usage-label strong { color: var(--ink); }
+.usage-track { flex: 1; min-width: 120px; height: 6px; background: var(--border); border-radius: 100px; overflow: hidden; }
+.usage-fill { height: 100%; border-radius: 100px; background: var(--accent); transition: width .4s; }
+.usage-fill.full { background: #b33; }
+.btn-upgrade-small {
+  font-family: var(--font-b); font-size: 12px; font-weight: 500;
+  padding: 5px 14px; border-radius: 100px; background: var(--gold-bg); color: var(--gold);
+  border: 1px solid #e8d88a; cursor: pointer; white-space: nowrap; transition: opacity .15s;
+}
+.btn-upgrade-small:hover { opacity: .85; }
+
+.form-card { max-width: 720px; margin: 0 auto; padding: 1.25rem 2rem 3rem; }
+.card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 1.75rem; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.full { grid-column: 1 / -1; }
+label { font-size: 13px; font-weight: 500; color: var(--ink2); }
+input, select, textarea {
+  font-family: var(--font-b); font-size: 14px; color: var(--ink);
+  background: var(--paper); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 13px; outline: none; transition: border-color .15s; width: 100%;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); background: #fff; }
+textarea { resize: vertical; min-height: 72px; }
+
+.tag-group { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 2px; }
+.tag-label {
+  cursor: pointer; font-size: 12.5px; padding: 5px 13px;
+  border-radius: 100px; border: 1px solid var(--border);
+  color: var(--ink2); transition: all .15s; background: var(--paper);
+}
+.tag-label:hover { border-color: var(--accent2); color: var(--accent); }
+input[type="checkbox"] { display: none; }
+input[type="checkbox"]:checked + .tag-label { background: #fdf3ec; border-color: var(--accent); color: var(--accent); font-weight: 500; }
+
+.divider { height: 1px; background: var(--border); margin: 1.35rem 0; }
+.section-title { font-size: 11px; font-weight: 500; letter-spacing: .08em; color: var(--ink3); margin-bottom: .85rem; text-transform: uppercase; }
+
+.btn-generate {
+  width: 100%; margin-top: 1.5rem; padding: 13px 24px;
+  font-family: var(--font-b); font-size: 15px; font-weight: 500; color: #fff;
+  background: var(--accent); border: none; border-radius: 10px;
+  cursor: pointer; transition: opacity .15s, transform .1s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.btn-generate:hover { opacity: .9; }
+.btn-generate:active { transform: scale(.99); }
+.btn-generate:disabled { opacity: .55; cursor: not-allowed; }
+
+.spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.limit-notice { text-align: center; font-size: 12px; color: var(--ink3); margin-top: .85rem; }
+.limit-notice a { color: var(--accent); cursor: pointer; }
+
+#result-section { max-width: 720px; margin: 0 auto; padding: 0 2rem 5rem; display: none; }
+.result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; flex-wrap: wrap; gap: 10px; }
+.result-header h2 { font-family: var(--font-d); font-size: 1.4rem; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-secondary {
+  font-family: var(--font-b); font-size: 13px; font-weight: 500;
+  padding: 7px 15px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--paper); color: var(--ink2); cursor: pointer; transition: all .15s;
+}
+.btn-secondary:hover { border-color: var(--ink3); color: var(--ink); }
+.btn-pdf { background: var(--success-bg); border-color: #a8d5bb; color: var(--success); }
+.btn-pdf:hover { background: #d6efde; }
+
+.result-card {
+  background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 2rem 2.25rem; font-size: 14.5px; line-height: 1.85; color: var(--ink);
+}
+.result-card h3 { font-family: var(--font-d); font-size: 1.1rem; color: var(--accent); margin: 1.4rem 0 .35rem; font-style: italic; }
+.result-card h3:first-child { margin-top: 0; }
+.stream-cursor { display: inline-block; width: 2px; height: 15px; background: var(--accent); animation: blink .8s step-end infinite; vertical-align: text-bottom; margin-left: 2px; }
+@keyframes blink { 50% { opacity: 0; } }
+
+#auth-modal {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(26,23,20,.55); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+#auth-modal.open { display: flex; }
+.modal-box {
+  background: #fff; border-radius: 16px; border: 1px solid var(--border);
+  padding: 2.5rem 2rem; width: 100%; max-width: 400px; margin: 1rem;
+  animation: slideUp .2s ease; position: relative;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-logo { font-family: var(--font-d); font-size: 1.5rem; text-align: center; margin-bottom: .25rem; }
+.modal-logo span { color: var(--accent); font-style: italic; }
+.modal-sub { text-align: center; font-size: 13px; color: var(--ink3); margin-bottom: 1.75rem; }
+.modal-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+.modal-tab {
+  flex: 1; text-align: center; padding: 10px; font-size: 14px; cursor: pointer; color: var(--ink3);
+  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s;
+}
+.modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+.modal-form { display: flex; flex-direction: column; gap: .85rem; }
+.modal-form input { font-size: 14px; }
+.btn-auth {
+  width: 100%; padding: 12px; font-family: var(--font-b); font-size: 14px;
+  font-weight: 500; color: #fff; background: var(--accent); border: none;
+  border-radius: 9px; cursor: pointer; transition: opacity .15s; margin-top: .25rem;
+}
+.btn-auth:hover { opacity: .9; }
+.auth-msg { font-size: 12px; text-align: center; color: var(--ink3); margin-top: .5rem; }
+.auth-msg a { color: var(--accent); cursor: pointer; }
+.modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--ink3); line-height: 1; }
+.error-msg { font-size: 12px; color: #c84b1f; text-align: center; min-height: 16px; }
+
+#pricing-page { max-width: 900px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+.pricing-hero { text-align: center; margin-bottom: 3rem; }
+.pricing-hero h2 { font-family: var(--font-d); font-size: clamp(1.8rem,4vw,2.6rem); letter-spacing: -.02em; margin-bottom: .75rem; }
+.pricing-hero h2 em { color: var(--accent); font-style: italic; }
+.pricing-hero p { color: var(--ink2); font-size: .95rem; }
+.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; }
+.price-card {
+  background: #fff; border: 1px solid var(--border); border-radius: 16px;
+  padding: 2rem 1.75rem; display: flex; flex-direction: column;
+}
+.price-card.featured { border: 2px solid var(--accent); }
+.price-label { font-size: 12px; font-weight: 500; letter-spacing: .06em; color: var(--ink3); text-transform: uppercase; margin-bottom: .5rem; }
+.price-label.hot { color: var(--accent); }
+.price-amount { font-family: var(--font-d); font-size: 2.8rem; color: var(--ink); line-height: 1; margin-bottom: .3rem; }
+.price-amount sup { font-size: 1.1rem; vertical-align: top; margin-top: .5rem; font-family: var(--font-b); }
+.price-period { font-size: 13px; color: var(--ink3); margin-bottom: 1.5rem; }
+.price-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.75rem; flex: 1; }
+.price-features li { font-size: 14px; color: var(--ink2); display: flex; align-items: flex-start; gap: 8px; }
+.check { color: var(--success); font-size: 16px; line-height: 1.4; flex-shrink: 0; }
+.cross { color: var(--ink3); font-size: 16px; line-height: 1.4; flex-shrink: 0; }
+.btn-plan { width: 100%; padding: 12px; font-family: var(--font-b); font-size: 14px; font-weight: 500; border-radius: 9px; cursor: pointer; transition: all .15s; }
+.btn-plan-free { background: var(--surface); color: var(--ink2); border: 1px solid var(--border); }
+.btn-plan-free:hover { border-color: var(--ink3); color: var(--ink); }
+.btn-plan-pro { background: var(--accent); color: #fff; border: none; }
+.btn-plan-pro:hover { opacity: .9; }
+.btn-plan-esc { background: var(--ink); color: #fff; border: none; }
+.btn-plan-esc:hover { opacity: .85; }
+.price-tag { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 100px; background: #fdf3ec; color: var(--accent); border: 1px solid var(--accent2); margin-bottom: .75rem; }
+
+.faq { margin-top: 3.5rem; }
+.faq h3 { font-family: var(--font-d); font-size: 1.6rem; text-align: center; margin-bottom: 1.75rem; }
+.faq-item { border-top: 1px solid var(--border); padding: 1.1rem 0; cursor: pointer; }
+.faq-item:last-child { border-bottom: 1px solid var(--border); }
+.faq-q { font-weight: 500; font-size: 14.5px; color: var(--ink); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.faq-q span { font-size: 18px; color: var(--ink3); transition: transform .2s; flex-shrink: 0; }
+.faq-a { font-size: 14px; color: var(--ink2); margin-top: .6rem; line-height: 1.7; display: none; }
+.faq-item.open .faq-q span { transform: rotate(45deg); }
+.faq-item.open .faq-a { display: block; }
+
+@media (max-width: 600px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .hero, .form-card, #result-section, #pricing-page, .usage-bar-wrap { padding-left: 1.25rem; padding-right: 1.25rem; }
+  .card { padding: 1.25rem; }
+  header { padding: .75rem 1.25rem; }
+  .nav-tabs { padding: 0 1.25rem; overflow-x: auto; }
+  .tab-btn { padding: 10px 14px; white-space: nowrap; }
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH MODAL -->
+<div id="auth-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeAuth()">✕</button>
+    <div class="modal-logo">Aula<span>nexa</span></div>
+    <div class="modal-sub">Tu asistente docente con inteligencia artificial</div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" id="tab-login" onclick="switchAuthTab('login')">Iniciar sesión</div>
+      <div class="modal-tab" id="tab-register" onclick="switchAuthTab('register')">Registrarme</div>
+    </div>
+    <div class="modal-form">
+      <div id="name-field" style="display:none;">
+        <input type="text" id="auth-name" placeholder="Tu nombre completo" />
+      </div>
+      <input type="email" id="auth-email" placeholder="Correo electrónico" />
+      <input type="password" id="auth-pass" placeholder="Contraseña" />
+      <div class="error-msg" id="auth-error"></div>
+      <button class="btn-auth" id="btn-auth-submit" onclick="submitAuth()">Entrar</button>
+      <div class="auth-msg" id="auth-switch-msg">
+        ¿No tenés cuenta? <a onclick="switchAuthTab('register')">Registrate gratis</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">Aula<span>nexa</span></div>
+  <div class="header-right">
+    <div id="header-guest" style="display:flex;gap:8px;align-items:center;">
+      <button class="btn-link" onclick="openAuth('login')">Iniciar sesión</button>
+      <button class="btn-secondary" style="font-size:13px;padding:6px 14px;" onclick="openAuth('register')">Registrarme</button>
+    </div>
+    <div id="header-user" style="display:none;gap:10px;align-items:center;" class="header-right">
+      <div class="user-pill">
+        <span id="user-avatar" style="width:22px;height:22px;border-radius:50%;background:#fdf3ec;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--accent);">?</span>
+        <strong id="user-name-display">Usuario</strong>
+        <span class="plan-badge plan-free" id="plan-badge-header">FREE</span>
+      </div>
+      <button class="btn-link" onclick="logout()">Salir</button>
+    </div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav-tabs">
+  <button class="tab-btn active" id="tab-app" onclick="showPage('app')">✦ Generador</button>
+  <button class="tab-btn" id="tab-pricing" onclick="showPage('pricing')">Precios</button>
+</nav>
+
+<!-- ══════════ APP ══════════ -->
+<div id="app-page" class="page active">
+  <div class="hero">
+    <div class="hero-tag">✦ Powered by Claude AI</div>
+    <h1>Tu plan de clase,<br/><em>listo en segundos</em></h1>
+    <p>Completá el formulario y la IA genera un plan completo con objetivos, actividades y evaluación.</p>
+  </div>
+
+  <div class="usage-bar-wrap no-print">
+    <div class="usage-bar-card">
+      <span class="usage-label">Usos hoy: <strong id="usage-count">0</strong> / <strong id="usage-limit">3</strong></span>
+      <div class="usage-track"><div class="usage-fill" id="usage-fill" style="width:0%"></div></div>
+      <button class="btn-upgrade-small" onclick="showPage('pricing')">⭐ Upgrade a Pro</button>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="card">
+      <div class="section-title">Datos de la clase</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="materia">Materia / Área</label>
+          <input type="text" id="materia" placeholder="Ej: Matemáticas, Lengua, Historia..." />
+        </div>
+        <div class="form-group">
+          <label for="grado">Nivel / Grado</label>
+          <select id="grado">
+            <option value="">Seleccioná el nivel</option>
+            <option>Inicial (3–5 años)</option>
+            <option>Primaria baja (1°–3°)</option>
+            <option>Primaria alta (4°–6°)</option>
+            <option>Secundaria baja (7°–9°)</option>
+            <option>Secundaria alta (10°–12°)</option>
+            <option>Universidad / Adultos</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="tema">Tema específico</label>
+          <input type="text" id="tema" placeholder="Ej: Fracciones, La Revolución Francesa..." />
+        </div>
+        <div class="form-group">
+          <label for="duracion">Duración</label>
+          <select id="duracion">
+            <option>30 minutos</option>
+            <option selected>45 minutos</option>
+            <option>60 minutos</option>
+            <option>80 minutos</option>
+            <option>90 minutos</option>
+            <option>2 horas</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label for="objetivo">Objetivo principal (opcional)</label>
+          <input type="text" id="objetivo" placeholder="Ej: Que los alumnos puedan resolver ecuaciones..." />
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-title">¿Qué incluir?</div>
+      <div class="tag-group">
+        <input type="checkbox" id="t1" checked><label class="tag-label" for="t1">Objetivos de aprendizaje</label>
+        <input type="checkbox" id="t2" checked><label class="tag-label" for="t2">Actividades paso a paso</label>
+        <input type="checkbox" id="t3" checked><label class="tag-label" for="t3">Materiales necesarios</label>
+        <input type="checkbox" id="t4" checked><label class="tag-label" for="t4">Cierre y evaluación</label>
+        <input type="checkbox" id="t5"><label class="tag-label" for="t5">Tarea para el hogar</label>
+        <input type="checkbox" id="t6"><label class="tag-label" for="t6">Adaptaciones para NEE</label>
+        <input type="checkbox" id="t7"><label class="tag-label" for="t7">Preguntas guía</label>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-title">Estilo pedagógico (opcional)</div>
+      <div class="tag-group">
+        <input type="checkbox" id="e1"><label class="tag-label" for="e1">Aprendizaje activo</label>
+        <input type="checkbox" id="e2"><label class="tag-label" for="e2">Trabajo en grupos</label>
+        <input type="checkbox" id="e3"><label class="tag-label" for="e3">Uso de tecnología</label>
+        <input type="checkbox" id="e4"><label class="tag-label" for="e4">Gamificación</label>
+        <input type="checkbox" id="e5"><label class="tag-label" for="e5">Aprendizaje basado en proyectos</label>
+      </div>
+
+      <div class="form-group" style="margin-top:1.1rem;">
+        <label for="notas">Notas adicionales (opcional)</label>
+        <textarea id="notas" placeholder="Contexto especial, recursos disponibles, características del grupo..."></textarea>
+      </div>
+
+      <button class="btn-generate" id="btn-gen" onclick="generatePlan()">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Generar plan de clase
+      </button>
+      <p class="limit-notice no-print" id="limit-notice-text">
+        Plan gratuito: <strong>3 generaciones</strong> por día · <a onclick="showPage('pricing')">Upgrade a Pro →</a>
+      </p>
+    </div>
+  </div>
+
+  <div id="result-section">
+    <div class="print-header">
+      <h1 id="print-title">Plan de clase</h1>
+      <p>Generado con Aulanexa · aulanexa.com</p>
+    </div>
+    <div class="result-header no-print">
+      <h2>Tu plan de clase</h2>
+      <div class="btn-row">
+        <button class="btn-secondary btn-pdf" onclick="window.print()">📄 Exportar PDF</button>
+        <button class="btn-secondary" id="btn-copy" onclick="copyResult()">📋 Copiar</button>
+        <button class="btn-secondary" onclick="resetForm()">↩ Nueva clase</button>
+      </div>
+    </div>
+    <div class="result-card" id="result-content"></div>
+  </div>
+</div>
+
+<!-- ══════════ PRICING ══════════ -->
+<div id="pricing-page" class="page">
+  <div class="pricing-hero">
+    <h2>Elegí el plan que<br/><em>se adapta a vos</em></h2>
+    <p>Empezá gratis. Crecé cuando lo necesites.</p>
+  </div>
+
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="price-label">Gratuito</div>
+      <div class="price-amount"><sup>$</sup>0</div>
+      <div class="price-period">para siempre</div>
+      <ul class="price-features">
+        <li><span class="check">✓</span> 3 planes de clase por día</li>
+        <li><span class="check">✓</span> Todas las secciones básicas</li>
+        <li><span class="check">✓</span> Exportar PDF</li>
+        <li><span class="cross">✗</span> Historial de planes</li>
+        <li><span class="cross">✗</span> Plantillas premium</li>
+        <li><span class="cross">✗</span> Rúbricas de evaluación</li>
+        <li><span class="cross">✗</span> Soporte prioritario</li>
+      </ul>
+      <button class="btn-plan btn-plan-free" onclick="openAuth('register')">Empezar gratis</button>
+    </div>
+
+    <div class="price-card featured">
+      <div class="price-tag">⭐ Más popular</div>
+      <div class="price-label hot">Pro</div>
+      <div class="price-amount"><sup>$</sup>5</div>
+      <div class="price-period">USD / mes · cancela cuando quieras</div>
+      <ul class="price-features">
+        <li><span class="check">✓</span> <strong>Planes ilimitados</strong></li>
+        <li><span class="check">✓</span> Todas las secciones básicas</li>
+        <li><span class="check">✓</span> Exportar PDF</li>
+        <li><span class="check">✓</span> Historial de tus planes</li>
+        <li><span class="check">✓</span> 20+ plantillas premium</li>
+        <li><span class="check">✓</span> Rúbricas de evaluación</li>
+        <li><span class="check">✓</span> Soporte prioritario</li>
+      </ul>
+      <button class="btn-plan btn-plan-pro" id="btn-subscribe" onclick="subscribePro()">Suscribirse por $5 →</button>
+    </div>
+
+    <div class="price-card">
+      <div class="price-label">Escuelas / Instituciones</div>
+      <div class="price-amount" style="font-size:2rem;">A medida</div>
+      <div class="price-period">precio por volumen</div>
+      <ul class="price-features">
+        <li><span class="check">✓</span> Todo lo de Pro</li>
+        <li><span class="check">✓</span> Múltiples docentes</li>
+        <li><span class="check">✓</span> Panel de administración</li>
+        <li><span class="check">✓</span> Capacitación incluida</li>
+        <li><span class="check">✓</span> Factura para instituciones</li>
+        <li><span class="check">✓</span> Integración con plataformas</li>
+        <li><span class="check">✓</span> SLA y soporte dedicado</li>
+      </ul>
+      <button class="btn-plan btn-plan-esc" onclick="alert('📬 Escribinos a hola@aulanexa.com para coordinar una demo')">Contactar →</button>
+    </div>
+  </div>
+
+  <div class="faq">
+    <h3>Preguntas frecuentes</h3>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">¿Necesito tarjeta de crédito para el plan gratuito? <span>+</span></div>
+      <div class="faq-a">No. El plan gratuito es 100% sin tarjeta. Solo te registrás con tu email y listo.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">¿Puedo cancelar el Pro cuando quiera? <span>+</span></div>
+      <div class="faq-a">Sí, sin preguntas y sin penalidades. Cancelás desde tu cuenta y no se te cobra el siguiente mes.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">¿En qué idioma genera los planes? <span>+</span></div>
+      <div class="faq-a">Por defecto en español latinoamericano. Podés pedirle que lo haga en otro idioma en el campo de notas adicionales.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">¿Los planes son de buena calidad pedagógica? <span>+</span></div>
+      <div class="faq-a">Usamos Claude (Anthropic), uno de los mejores modelos de IA del mundo, entrenado para contextos educativos. Los planes son adaptativos, concretos y aplicables directamente en el aula.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">¿Qué pasa si me quedo sin usos gratuitos? <span>+</span></div>
+      <div class="faq-a">El contador se resetea automáticamente cada 24 horas. O podés upgradear a Pro para usos ilimitados al instante.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const LIMIT_FREE = 3;
+const SK = 'aulanexa_v1';
+
+function load() {
+  try { 
+    let state = JSON.parse(localStorage.getItem(SK));
+    if (!state) state = { users:{}, cur:null };
+    
+    // Inyectar usuarios de prueba
+    if (!state.users['free@aulanexa.com']) {
+      state.users['free@aulanexa.com'] = { email: 'free@aulanexa.com', pass: '1234', name: 'Usuario Free', plan: 'free', usage: {}, createdAt: Date.now() };
+    }
+    if (!state.users['pro@aulanexa.com']) {
+      state.users['pro@aulanexa.com'] = { email: 'pro@aulanexa.com', pass: '1234', name: 'Usuario Pro', plan: 'pro', usage: {}, createdAt: Date.now() };
+    }
+    
+    return state;
+  }
+  catch { return { users:{}, cur:null }; }
+}
+function save() { localStorage.setItem(SK, JSON.stringify(S)); }
+
+let S = load();
+function getUser() { return S.cur ? S.users[S.cur] : null; }
+function todayKey() { return new Date().toISOString().slice(0,10); }
+function getUsed() { const u=getUser(); if(!u) return 0; const k=todayKey(); return (u.usage&&u.usage[k])||0; }
+function isPro() { const u=getUser(); return u&&u.plan==='pro'; }
+function addUsage() {
+  const u=getUser(); if(!u) return;
+  const k=todayKey(); if(!u.usage) u.usage={};
+  u.usage[k]=(u.usage[k]||0)+1;
+  S.users[S.cur]=u; save(); updateUsageUI();
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  syncHeader(); updateUsageUI();
+  
+  // Revisar si venimos de un pago exitoso de MercadoPago
+  const urlParams = new URLSearchParams(window.location.search);
+  const status = urlParams.get('status');
+  if(status === 'success' && getUser()) {
+    const u = getUser();
+    u.plan = 'pro';
+    S.users[S.cur] = u;
+    save();
+    syncHeader();
+    updateUsageUI();
+    alert('¡Pago exitoso! Tu cuenta ahora es Pro. Disfruta de generaciones ilimitadas.');
+    // Limpiar la URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  if(!getUser()) setTimeout(()=>openAuth('register'),900);
+});
+
+function syncHeader(){
+  const u=getUser();
+  if(u){
+    document.getElementById('header-guest').style.display='none';
+    document.getElementById('header-user').style.display='flex';
+    document.getElementById('user-name-display').textContent=u.name;
+    document.getElementById('user-avatar').textContent=u.name.charAt(0).toUpperCase();
+    const b=document.getElementById('plan-badge-header');
+    if(u.plan==='pro'){b.textContent='PRO';b.className='plan-badge plan-pro';}
+    else{b.textContent='FREE';b.className='plan-badge plan-free';}
+  } else {
+    document.getElementById('header-guest').style.display='flex';
+    document.getElementById('header-user').style.display='none';
+  }
+}
+
+function updateUsageUI(){
+  const used=getUsed();
+  const pro=isPro();
+  document.getElementById('usage-count').textContent=used;
+  document.getElementById('usage-limit').textContent=pro?'∞':LIMIT_FREE;
+  const pct=pro?0:Math.min((used/LIMIT_FREE)*100,100);
+  const fill=document.getElementById('usage-fill');
+  fill.style.width=pct+'%';
+  fill.className='usage-fill'+(pct>=100?' full':'');
+  const n=document.getElementById('limit-notice-text');
+  if(pro) n.innerHTML='⭐ Plan Pro activo — <strong>generaciones ilimitadas</strong>';
+  else n.innerHTML='Plan gratuito: <strong>3 generaciones</strong> por día · <a onclick="showPage(\'pricing\')">Upgrade a Pro →</a>';
+}
+
+function showPage(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+  document.getElementById(p+'-page').classList.add('active');
+  document.getElementById('tab-'+p).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+let authMode='login';
+function openAuth(m){ document.getElementById('auth-modal').classList.add('open'); switchAuthTab(m); }
+function closeAuth(){ document.getElementById('auth-modal').classList.remove('open'); document.getElementById('auth-error').textContent=''; }
+function switchAuthTab(m){
+  authMode=m;
+  document.getElementById('tab-login').className='modal-tab'+(m==='login'?' active':'');
+  document.getElementById('tab-register').className='modal-tab'+(m==='register'?' active':'');
+  document.getElementById('name-field').style.display=m==='register'?'block':'none';
+  document.getElementById('btn-auth-submit').textContent=m==='login'?'Entrar':'Crear cuenta gratis';
+  document.getElementById('auth-switch-msg').innerHTML=m==='login'
+    ?'¿No tenés cuenta? <a onclick="switchAuthTab(\'register\')">Registrate gratis</a>'
+    :'¿Ya tenés cuenta? <a onclick="switchAuthTab(\'login\')">Iniciá sesión</a>';
+  document.getElementById('auth-error').textContent='';
+}
+function submitAuth(){
+  const email=document.getElementById('auth-email').value.trim().toLowerCase();
+  const pass=document.getElementById('auth-pass').value;
+  const name=document.getElementById('auth-name').value.trim();
+  const err=document.getElementById('auth-error');
+  if(!email||!pass){err.textContent='Completá todos los campos.';return;}
+  if(authMode==='register'&&!name){err.textContent='Ingresá tu nombre.';return;}
+  if(pass.length<4){err.textContent='La contraseña debe tener al menos 4 caracteres.';return;}
+  if(authMode==='register'){
+    if(S.users[email]){err.textContent='Ya existe una cuenta con ese email.';return;}
+    S.users[email]={email,pass,name,plan:'free',usage:{},createdAt:Date.now()};
+    S.cur=email; save(); closeAuth(); syncHeader(); updateUsageUI();
+  } else {
+    const u=S.users[email];
+    if(!u||u.pass!==pass){err.textContent='Email o contraseña incorrectos.';return;}
+    S.cur=email; save(); closeAuth(); syncHeader(); updateUsageUI();
+  }
+}
+function logout(){ S.cur=null; save(); syncHeader(); updateUsageUI(); }
+
+function getChecked(ids){
+  return ids.filter(id=>document.getElementById(id).checked)
+            .map(id=>document.querySelector('label[for="'+id+'"]').textContent.trim());
+}
+
+async function generatePlan(){
+  if(!getUser()){openAuth('register');return;}
+  const used=getUsed();
+  if(!isPro()&&used>=LIMIT_FREE){
+    if(confirm('Alcanzaste el límite de '+LIMIT_FREE+' generaciones gratuitas por hoy.\n\n¿Querés ver los planes de suscripción?'))
+      showPage('pricing');
+    return;
+  }
+  const materia=document.getElementById('materia').value.trim();
+  const tema=document.getElementById('tema').value.trim();
+  const grado=document.getElementById('grado').value;
+  if(!materia||!tema||!grado){alert('Completá al menos: Materia, Nivel y Tema.');return;}
+  const duracion=document.getElementById('duracion').value;
+  const objetivo=document.getElementById('objetivo').value.trim();
+  const notas=document.getElementById('notas').value.trim();
+  const incluir=getChecked(['t1','t2','t3','t4','t5','t6','t7']);
+  const estilos=getChecked(['e1','e2','e3','e4','e5']);
+
+  const btn=document.getElementById('btn-gen');
+  btn.disabled=true;
+  btn.innerHTML='<div class="spinner"></div> Generando tu plan...';
+
+  const rs=document.getElementById('result-section');
+  const rc=document.getElementById('result-content');
+  rs.style.display='block';
+  rc.innerHTML='<span class="stream-cursor"></span>';
+  rs.scrollIntoView({behavior:'smooth',block:'start'});
+  document.getElementById('print-title').textContent='Plan de clase: '+tema+' · '+grado;
+
+  const prompt=`Sos un experto en pedagogía y diseño curricular latinoamericano. Generá un plan de clase detallado:
+
+- Materia/Área: ${materia}
+- Nivel/Grado: ${grado}
+- Tema: ${tema}
+- Duración: ${duracion}
+${objetivo?'- Objetivo principal: '+objetivo:''}
+${estilos.length?'- Enfoque pedagógico: '+estilos.join(', '):''}
+${notas?'- Notas adicionales: '+notas:''}
+
+Secciones a incluir: ${incluir.join(', ')}.
+
+Usá ## para los títulos de cada sección. Sé concreto y aplicable en el aula. Usá español rioplatense. Incluí tiempos aproximados entre paréntesis donde corresponda.`;
+
+  let full='';
+  try {
+    const res=await fetch('/api/generate',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ prompt })
+    });
+    
+    if(!res.ok) throw new Error('Error en el servidor local');
+
+    const reader=res.body.getReader();
+    const dec=new TextDecoder();
+    let buf='';
+    while(true){
+      const {done,value}=await reader.read();
+      if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n'); buf=lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        const d=line.slice(6).trim();
+        if(d==='[DONE]') break;
+        try{
+          const p=JSON.parse(d);
+          if(p.text){
+            full+=p.text;
+            rc.innerHTML=fmt(full)+'<span class="stream-cursor"></span>';
+          }
+        }catch{}
+      }
+    }
+    rc.innerHTML=fmt(full);
+    addUsage();
+  } catch(e){
+    console.error(e);
+    rc.innerHTML='<p style="color:var(--accent);">Error al generar el plan. Por favor verificá que el servidor Node (server.js) esté corriendo.</p>';
+  }
+  btn.disabled=false;
+  btn.innerHTML='<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Generar plan de clase';
+}
+
+function fmt(t){
+  return t
+    .replace(/^#{1,3}\s(.+)$/gm,'<h3>$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^- (.+)$/gm,'• $1<br/>')
+    .replace(/^\d+\.\s(.+)$/gm,m=>{const[n,...r]=m.split('. ');return'<strong>'+n+'.</strong> '+r.join('. ')+'<br/>';})
+    .replace(/\n\n/g,'<br/><br/>');
+}
+
+function copyResult(){
+  const text=document.getElementById('result-content').innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    const b=document.getElementById('btn-copy');
+    b.textContent='✓ Copiado'; setTimeout(()=>b.textContent='📋 Copiar',2000);
+  });
+}
+function resetForm(){
+  document.getElementById('result-section').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleFaq(el){ el.classList.toggle('open'); }
+
+async function subscribePro() {
+  const u = getUser();
+  if(!u) {
+    openAuth('register');
+    return;
+  }
+  
+  const btn = document.getElementById('btn-subscribe');
+  const originalText = btn.textContent;
+  btn.textContent = 'Procesando...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: u.email })
+    });
+    
+    if(!res.ok) throw new Error('Error al iniciar el checkout');
+    
+    const data = await res.json();
+    if(data.init_point) {
+      window.location.href = data.init_point;
+    } else {
+      throw new Error('No se recibió el enlace de pago');
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Hubo un problema al conectar con MercadoPago. Asegúrate de que el servidor esté corriendo.');
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
