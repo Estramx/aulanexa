@@ -91,7 +91,7 @@ app.post('/api/checkout', async (req, res) => {
             title: 'Suscripción Pro Aulanexa (1 Mes)',
             unit_price: 5,
             quantity: 1,
-            currency_id: 'ARS'
+            currency_id: 'USD'
           }
         ],
         payer: {
