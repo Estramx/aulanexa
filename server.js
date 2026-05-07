@@ -78,7 +78,9 @@ app.post('/api/checkout', async (req, res) => {
     
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const host = req.get('host');
-    const baseUrl = `${protocol}://${host}`;
+    const baseUrl = `https://${host}`; // Forzamos https para Render
+    
+    console.log('Generando preferencia de pago para:', baseUrl);
     
     const preference = new Preference(mpClient);
     
