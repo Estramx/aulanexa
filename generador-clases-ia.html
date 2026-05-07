@@ -723,8 +723,12 @@ function resetForm(){
 function toggleFaq(el){ el.classList.toggle('open'); }
 
 async function subscribePro() {
+  console.log('Botón de suscripción presionado');
   const u = getUser();
+  console.log('Usuario actual:', u);
+  
   if(!u) {
+    console.log('No hay usuario, abriendo login...');
     openAuth('register');
     return;
   }
@@ -735,22 +739,28 @@ async function subscribePro() {
   btn.disabled = true;
 
   try {
+    console.log('Llamando a la API de checkout...');
     const res = await fetch('/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: u.email })
     });
     
+    console.log('Respuesta de la API recibida:', res.status);
+    
     if(!res.ok) throw new Error('Error al iniciar el checkout');
     
     const data = await res.json();
+    console.log('Datos de checkout:', data);
+    
     if(data.init_point) {
+      console.log('Redirigiendo a MercadoPago:', data.init_point);
       window.location.href = data.init_point;
     } else {
       throw new Error('No se recibió el enlace de pago');
     }
   } catch (error) {
-    console.error(error);
+    console.error('Error en subscribePro:', error);
     alert('Hubo un problema al conectar con MercadoPago. Asegúrate de que el servidor esté corriendo.');
     btn.textContent = originalText;
     btn.disabled = false;
