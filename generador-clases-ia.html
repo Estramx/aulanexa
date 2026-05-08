@@ -644,19 +644,29 @@ async function generatePlan(){
   rs.scrollIntoView({behavior:'smooth',block:'start'});
   document.getElementById('print-title').textContent='Plan de clase: '+tema+' · '+grado;
 
-  const prompt=`Sos un experto en pedagogía y diseño curricular latinoamericano. Generá un plan de clase detallado:
+  const prompt=`Actúa como un experto consultor pedagógico y diseñador curricular de alto nivel con amplia experiencia en sistemas educativos latinoamericanos. Tu tarea es generar un plan de clase profesional, extremadamente detallado, creativo y listo para ser aplicado en el aula.
 
+DATOS CLAVE:
 - Materia/Área: ${materia}
 - Nivel/Grado: ${grado}
-- Tema: ${tema}
-- Duración: ${duracion}
-${objetivo?'- Objetivo principal: '+objetivo:''}
-${estilos.length?'- Enfoque pedagógico: '+estilos.join(', '):''}
-${notas?'- Notas adicionales: '+notas:''}
+- Tema Específico: ${tema}
+- Duración total: ${duracion}
+${objetivo ? '- Objetivo principal establecido por el docente: ' + objetivo : ''}
+${estilos.length ? '- Enfoque pedagógico solicitado: ' + estilos.join(', ') : ''}
+${notas ? '- Notas y contexto adicional: ' + notas : ''}
 
-Secciones a incluir: ${incluir.join(', ')}.
+SECCIONES REQUERIDAS (Desarróllalas con profundidad):
+${incluir.join(', ')}.
 
-Usá ## para los títulos de cada sección. Sé concreto y aplicable en el aula. Usá español rioplatense. Incluí tiempos aproximados entre paréntesis donde corresponda.`;
+INSTRUCCIONES CRÍTICAS DE FORMATO Y CONTENIDO:
+1. Usa ## para los títulos de cada sección.
+2. Las ACTIVIDADES deben estar desglosadas en tres momentos claros: Inicio (motivación y saberes previos), Desarrollo (explicación y práctica activa) y Cierre (metacognición y síntesis). Indica tiempos específicos para cada una.
+3. Sé EXTENSO y descriptivo. No te limites a frases cortas; explica el "cómo" y el "por qué" de cada propuesta.
+4. Usa un tono profesional pero cercano, en español rioplatense (voseo).
+5. Si se solicitó "Adaptaciones para NEE", brinda sugerencias concretas y empáticas.
+6. Si se solicitó "Evaluación", diseña indicadores de logro claros.
+
+Genera un contenido rico, pedagógicamente sólido y que realmente ahorre trabajo al docente brindándole ideas innovadoras.`;
 
   let full='';
   try {
