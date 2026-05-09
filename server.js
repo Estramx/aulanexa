@@ -50,7 +50,7 @@ app.post('/api/generate', async (req, res) => {
       ],
       model: 'llama-3.3-70b-versatile',
       stream: true,
-      max_tokens: 2000,
+      max_tokens: 5000,
       temperature: 0.7,
     });
 
